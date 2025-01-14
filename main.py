@@ -1,7 +1,5 @@
-import os
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
-import time  # For additional delays if needed
 
 # Define path to your .env file
 env_file_path = "D:/my_project_starty/scraping_and_comparison/.env"
@@ -10,80 +8,52 @@ env_file_path = "D:/my_project_starty/scraping_and_comparison/.env"
 load_dotenv(dotenv_path=env_file_path)
 
 # Fetch the username and password from environment variables
-USERNAME = os.getenv("USERNAME")
-PASSWORD = os.getenv("PASSWORD")
-
-# Check if USERNAME and PASSWORD are loaded properly
-print(f"Loaded USERNAME from .env: {USERNAME}")
-print(f"Loaded PASSWORD from .env: {PASSWORD}")
-
-if not USERNAME or not PASSWORD:
-    raise ValueError("USERNAME or PASSWORD is not set in the .env file.")
+USERNAME = "ysk7774"
+PASSWORD = "opop0opop0"
 
 def login_using_playwright():
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)  # Change to headless=True if needed
+        browser = p.chromium.launch(headless=False)  # Set to True for headless mode
         page = browser.new_page()
 
-        # Step 1: Open the website with an increased timeout
         try:
-            print("Opening the website...")
-            page.goto("https://starop05.com/", timeout=120000)  # Increased timeout to 120 seconds
-            print("Website loaded successfully!")
+            # Step 1: Open the login page
+            print("Opening the login page...")
+            page.goto("https://starop05.com/login/login.php", timeout=120000)
+            print("Login page loaded successfully!")
         except Exception as e:
-            print(f"Error loading the page: {e}")
-            print(f"Current URL: {page.url}")  # Print the current URL to check if there's a redirect
-            page.screenshot(path="error_screenshot.png")  # Capture the page on error
+            print(f"Error loading the login page: {e}")
             browser.close()
             return
 
-        # Step 2: Wait for the login button and click it
         try:
-            print("Waiting for the login button to appear...")
-            #Wait for the <a> tag with href="/login/login.php"
-            login_button = page.wait_for_selector('a[href="/login/login.php"]', timeout=60000)
-            if login_button:
-                print("Login button found. Clicking it...")
-                page.click('a[href="/login/login.php"]')  # Click the button
-                print("Login button clicked successfully!")
-            else:
-                print("Login button not found or not visible.")
-                browser.close()
-                return
+            # Step 2: Locate the input fields by their type and enter credentials
+            print(f"Filling in username: {USERNAME} and password...")
+            username_input = page.wait_for_selector('input[type="text"]#user_id', timeout=60000)
+            password_input = page.wait_for_selector('input[type="password"]#user_pw', timeout=60000)
+
+            # Fill in the username and password
+            username_input.fill(USERNAME)
+            password_input.fill(PASSWORD)
+            print("Credentials entered successfully!")
         except Exception as e:
-            print(f"Error finding or clicking the login button: {e}")
+            print(f"Error finding or filling login fields: {e}")
             browser.close()
             return
 
-
-
-        # Step 3: Wait for the login fields to load
         try:
-            print("Waiting for login fields to appear...")
-            page.wait_for_selector("#user_id", timeout=60000)
-            print("Login fields loaded.")
-        except Exception as e:
-            print(f"Error waiting for login fields: {e}")
-            browser.close()
-            return
-
-        # Step 4: Fill in login credentials
-        print(f"Filling in username: {USERNAME} and password...")
-        page.fill("#user_id", USERNAME)
-        page.fill("#user_pw", PASSWORD)
-        time.sleep(2)  # Simulate human delay
-        
-        # Step 5: Submit the login form
-        try:
-            print("Clicking the login button on the login form...")
-            page.click(".login_btn")
+            # Step 3: Click the login button
+            print("Clicking the login button...")
+            login_button = page.wait_for_selector('a.login_btn', timeout=60000)
+            login_button.click()
+            print("Login button clicked successfully!")
         except Exception as e:
             print(f"Error clicking the login button: {e}")
             browser.close()
             return
 
-        # Step 6: Wait for the page to load after login
         try:
+            # Step 4: Wait for the page to load after login
             print("Waiting for the page to load after login...")
             page.wait_for_load_state("networkidle", timeout=60000)
             print("Page appears to have loaded.")
@@ -92,21 +62,19 @@ def login_using_playwright():
             browser.close()
             return
 
-        # Step 7: Verify the login was successful
-        current_url = page.url
-        expected_url = "https://starop05.com/member/mypage_user_info.php"
-        print(f"Current URL after login attempt: {current_url}")
+        # # Step 5: Verify the login was successful
+        # current_url = page.url
+        # expected_url = "https://starop05.com/member/mypage_user_info.php"
+        # print(f"Current URL after login attempt: {current_url}")
         
-        if current_url == expected_url:
-            print(f"Login successful! Redirected to the expected URL: {current_url}")
-            page.screenshot(path="dashboard_screenshot.png")
-        else:
-            print(f"Login failed or redirected to an unexpected URL: {current_url}")
-            print("Page content after redirection:")
-            #print(page.content())  # Print the page's HTML to debug issues
+        # if current_url == expected_url:
+        #     print(f"Login successful! Redirected to the expected URL: {current_url}")
+        #     page.screenshot(path="dashboard_screenshot.png")
+        # else:
+        #     print(f"Login failed or redirected to an unexpected URL: {current_url}")
         
-        # Close the browser
-        browser.close()
+        # # Close the browser
+        # browser.close()
 
 if __name__ == "__main__":
     login_using_playwright()
